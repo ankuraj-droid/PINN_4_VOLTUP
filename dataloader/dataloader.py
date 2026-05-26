@@ -40,7 +40,7 @@ class DF():
         df = df.reset_index(drop=True)
         return df
 
-    def read_one_csv(self,file_name,nominal_capacity=30.0):
+    def read_one_csv(self,file_name,nominal_capacity=None):
         '''
         read a csv file and return a DataFrame
         :param file_name: str
@@ -65,7 +65,7 @@ class DF():
 
         return df
 
-    def load_one_battery(self,path,nominal_capacity=30.0):
+    def load_one_battery(self,path,nominal_capacity=None):
         '''
         Read a csv file and divide the data into x and y
         :param path:
@@ -81,8 +81,7 @@ class DF():
         y2 = y[1:]
         return (x1,y1),(x2,y2)
     
-    ## Changed the nominal_capacity to 30.0
-    def load_all_battery(self,path_list,nominal_capacity=30.0):
+    def load_all_battery(self,path_list,nominal_capacity):
         '''
         Read multiple csv files, divide the data into X and Y, and then package it into a dataloader
         :param path_list: list of file paths
@@ -117,12 +116,6 @@ class DF():
         # print('X shape:',tensor_X1.shape)
         # print('Y shape:',tensor_Y1.shape)
 
-        # 有时候需要指定训练集和测试集的电池ID，因此这个函数返回一个字典，里面包含多种情况，
-        # 可根据需要选择
-        # 1. 传入的path_list是【训练集】、【验证集】和【测试集】的电池ID，这时候按照前80%训练，后20%测试划分，再从训练集中随机划分出验证集，比例为8:2
-        # 2. 传入的path_list是【训练集】和【测试集】的电池ID，这种情况只需要按照8:2随机化划分训练集和测试集即可
-        # 3. 传入的path_list是【测试集】的电池ID，则不需要划分，直接封装成dataloader即可
-        ## English version
         # Sometimes it is necessary to specify the battery ID of the training set and test set,
         # so this function returns a dictionary containing a variety of situations,
         # You can choose according to your needs
@@ -134,13 +127,12 @@ class DF():
         # 3. The incoming path_list is the battery ID of the [test set], so there is no need to divide it and it can be directly encapsulated into a dataloader.
 
         # Condition 1
-        # 1.1 划分训练集和测试集
         split = int(tensor_X1.shape[0] * 0.8)
         train_X1, test_X1 = tensor_X1[:split], tensor_X1[split:]
         train_X2, test_X2 = tensor_X2[:split], tensor_X2[split:]
         train_Y1, test_Y1 = tensor_Y1[:split], tensor_Y1[split:]
         train_Y2, test_Y2 = tensor_Y2[:split], tensor_Y2[split:]
-        # 1.2 划分训练集和验证集
+    
         train_X1, valid_X1, train_X2, valid_X2, train_Y1, valid_Y1, train_Y2, valid_Y2 = \
             train_test_split(train_X1, train_X2, train_Y1, train_Y2, test_size=0.2, random_state=420)
 
@@ -207,6 +199,37 @@ class HUSTdata(DF):
         else:
             return self.load_all_battery(path_list=specific_path_list, nominal_capacity=self.nominal_capacity)
         
+### This added class is for the VOLTUP dataset, which has the same format as the HUST dataset, so we can reuse the code in the DF class to read and process the data.
+class VOLTUPdata(DF):
+    def __init__(self,root='../data/VOLTUP data',args=None):
+        super(VOLTUPdata, self).__init__(args)
+        self.root = root
+        if self.normalization:
+            self.nominal_capacity = 30.0
+        else:
+            self.nominal_capacity = None
+        #print('-'*20,'VOLTUP data','-'*20)
+
+    def read_all(self,specific_path_list=None):
+        '''
+        Read all csv files.
+        If specific_path_list is not None, read the specified file;
+        otherwise read all files;
+        :param self:
+        :param specific_path:
+        :return: dict
+
+        '''
+        if specific_path_list is None:
+            file_list = []
+            files = os.listdir(self.root)
+            for file in files:
+                path = os.path.join(self.root,file)
+                file_list.append(path)
+            return self.load_all_battery(path_list=file_list, nominal_capacity=self.nominal_capacity)
+        else:
+            return self.load_all_battery(path_list=specific_path_list, nominal_capacity=self.nominal_capacity)
+
 
 
 if __name__ == '__main__':
@@ -222,20 +245,15 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    # xjtu = XJTUdata(root='../data/XJTU data',args=args)
-    # path = '../data/XJTU data/2C_battery-1.csv'
-    # xjtu.read_one_batch('2C')
-    # xjtu.read_all()
-    #
-    # hust = HUSTdata(args=args)
-    # hust.read_all()
-    #
-    mit = MITdata(args=args)
-    mit.read_one_batch(batch=1)
-    loader = mit.read_all()
+    ## hust = HUSTdata(args=args)
+    ## hust.read_all()
+   
 
-    # tju = HUSTdata(args=args)
-    # loader = tju.read_all()
+    voltup = VOLTUPdata(args=args)
+    voltup.read_one_batch(batch=1)
+    loader = voltup.read_all()
+   
+
     train_loader = loader['train']
     test_loader = loader['test']
     valid_loader = loader['valid']

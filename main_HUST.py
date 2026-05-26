@@ -1,5 +1,5 @@
 
-from dataloader.dataloader import XJTUdata,MITdata,HUSTdata,TJUdata
+from dataloader.dataloader import HUSTdata
 from Model.Model import PINN
 import argparse
 import os
