@@ -55,13 +55,13 @@ class DF():
             #print(f'nominal_capacity:{nominal_capacity}, capacity max:{df["capacity"].max()}',end=',')
             df['capacity'] = df['capacity']/nominal_capacity
             #print(f'SOH max:{df["capacity"].max()}')
-            f_df = df.iloc[:,:-1]
+            f_df = df.iloc[:,:-1].astype(np.float64)
             if self.normalization_method == 'min-max':
                 f_df = 2*(f_df - f_df.min())/(f_df.max() - f_df.min()) - 1
             elif self.normalization_method == 'z-score':
                 f_df = (f_df - f_df.mean())/f_df.std()
 
-            df.iloc[:,:-1] = f_df
+            df.iloc[:,:-1] = f_df.values
 
         return df
 
