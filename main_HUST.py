@@ -89,6 +89,6 @@ def small_sample():
 
 
 if __name__ == '__main__':
-    pass
+    # pass
     # main()
-    # small_sample()
+    small_sample()
