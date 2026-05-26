@@ -47,7 +47,7 @@ class DF():
         :return: DataFrame
         '''
         df = pd.read_csv(file_name)
-        df.insert(df.shape[1]-1,'cycle index',np.arange(df.shape[0]))
+        df.insert(df.shape[1]-1,'cycle index',np.arange(df.shape[0], dtype=float))
 
         df = self.delete_3_sigma(df)
 
