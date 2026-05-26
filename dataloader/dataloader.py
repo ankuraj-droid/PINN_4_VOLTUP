@@ -245,13 +245,13 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    ## hust = HUSTdata(args=args)
-    ## hust.read_all()
+    hust = HUSTdata(args=args)
+    loader = hust.read_all()
    
 
-    voltup = VOLTUPdata(args=args)
-    voltup.read_one_batch(batch=1)
-    loader = voltup.read_all()
+    #voltup = VOLTUPdata(args=args)
+    #voltup.read_one_batch(batch=1)
+    #loader = voltup.read_all()
    
 
     train_loader = loader['train']
