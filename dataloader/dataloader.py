@@ -201,7 +201,7 @@ class HUSTdata(DF):
         
 ### This added class is for the VOLTUP dataset, which has the same format as the HUST dataset, so we can reuse the code in the DF class to read and process the data.
 class VOLTUPdata(DF):
-    def __init__(self,root='../data/VOLTUP data',args=None):
+    def __init__(self,root='../data/VOLTUP DATA',args=None):
         super(VOLTUPdata, self).__init__(args)
         self.root = root
         if self.normalization:

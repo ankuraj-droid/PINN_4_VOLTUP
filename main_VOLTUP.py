@@ -32,7 +32,7 @@ def get_args():
 
     parser.add_argument('--log_dir', type=str, default='logging.txt', help='log dir, if None, do not save')
     parser.add_argument('--save_folder', type=str, default='results/VOLTUP results', help='save folder')
-    parser.add_argument('--data_root', type=str, default='data/VOLTUP data', help='VOLTUP data folder')
+    parser.add_argument('--data_root', type=str, default='data/VOLTUP DATA', help='VOLTUP data folder')
 
     return parser.parse_args()
 
