@@ -167,6 +167,28 @@ class DF():
                   'test_3': test_loader_3}
         return loader
 
+    def make_loader(self, path_list, nominal_capacity, shuffle=False):
+        '''
+        Build ONE DataLoader over the cycle-pairs of the given cells, with NO internal
+        row-level split. Use this to keep train/valid/test separated at the WHOLE-CELL
+        level (avoids the intra-cell cycle leakage that train_2/valid_2 introduce when a
+        single cell's cycles straddle the 80/20 row boundary).
+        '''
+        X1, X2, Y1, Y2 = [], [], [], []
+        for path in path_list:
+            (x1, y1), (x2, y2) = self.load_one_battery(path, nominal_capacity)
+            X1.append(x1); X2.append(x2); Y1.append(y1); Y2.append(y2)
+        X1 = np.concatenate(X1, axis=0); X2 = np.concatenate(X2, axis=0)
+        Y1 = np.concatenate(Y1, axis=0); Y2 = np.concatenate(Y2, axis=0)
+        # SOH plausibility check (labels are capacity/nominal, expected ~[0.5, 1.3])
+        if nominal_capacity is not None and ((Y1 < 0.5).any() or (Y1 > 1.3).any()):
+            print(f'[warn] SOH outside [0.5,1.3] for {len(path_list)} cells '
+                  f'(min={Y1.min():.3f}, max={Y1.max():.3f}) — check nominal_capacity={nominal_capacity}')
+        ds = TensorDataset(torch.from_numpy(X1).float(), torch.from_numpy(X2).float(),
+                           torch.from_numpy(Y1).float().view(-1, 1),
+                           torch.from_numpy(Y2).float().view(-1, 1))
+        return DataLoader(ds, batch_size=self.args.batch_size, shuffle=shuffle)
+
 
 
 class HUSTdata(DF):
@@ -227,6 +249,43 @@ class VOLTUPdata(DF):
                 path = os.path.join(self.root,file)
                 file_list.append(path)
             return self.load_all_battery(path_list=file_list, nominal_capacity=self.nominal_capacity)
+        else:
+            return self.load_all_battery(path_list=specific_path_list, nominal_capacity=self.nominal_capacity)
+
+
+### MIT (Severson) dataset. Same 16-feature CSV format as HUST. The cells are A123 APR18650M1A
+### LFP, nominal capacity 1.1 Ah (same as HUST), so SOH normalisation is directly comparable.
+### CSVs live in three batch subfolders: 2017-05-12, 2017-06-30, 2018-04-12.
+class MITdata(DF):
+    def __init__(self,root='../data/MIT data',args=None):
+        super(MITdata, self).__init__(args)
+        self.root = root
+        self.batchs = ['2017-05-12','2017-06-30','2018-04-12']
+        if self.normalization:
+            self.nominal_capacity = 1.1
+        else:
+            self.nominal_capacity = None
+
+    def _all_csv_paths(self):
+        '''Return every cell CSV across the three batch subfolders.'''
+        paths = []
+        for batch in self.batchs:
+            batch_dir = os.path.join(self.root, batch)
+            if not os.path.isdir(batch_dir):
+                continue
+            for f in sorted(os.listdir(batch_dir)):
+                if f.lower().endswith('.csv'):
+                    paths.append(os.path.join(batch_dir, f))
+        return paths
+
+    def read_all(self,specific_path_list=None):
+        '''
+        Read all csv files.
+        If specific_path_list is not None, read the specified files;
+        otherwise read every cell across all three batch subfolders.
+        '''
+        if specific_path_list is None:
+            return self.load_all_battery(path_list=self._all_csv_paths(), nominal_capacity=self.nominal_capacity)
         else:
             return self.load_all_battery(path_list=specific_path_list, nominal_capacity=self.nominal_capacity)
 

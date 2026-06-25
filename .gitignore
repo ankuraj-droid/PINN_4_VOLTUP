@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Heavy / regenerable training artifacts (keep model.pth + metrics.json)
+results/**/*.npy
+results/**/logging.txt
+results/**/run.log
+
+# Local envs
+.venv/
+venv/
