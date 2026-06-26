@@ -15,3 +15,6 @@ results/**/run.log
 # Local envs
 .venv/
 venv/
+
+# Heavy raw VoltUp telemetry (30GB+, not for git)
+Voltup_raw_data/
